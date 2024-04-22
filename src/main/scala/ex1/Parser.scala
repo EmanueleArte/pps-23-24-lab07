@@ -12,27 +12,34 @@ abstract class Parser[T]:
   def parseAll(seq: Seq[T]): Boolean = (seq forall parse) & end // note &, not &&
 
 object Parsers:
-  val todo = ??? // put the extensions here..
-class BasicParser(chars: Set[Char]) extends Parser[Char]:
-  override def parse(t: Char): Boolean = chars.contains(t)
-  override def end: Boolean = true
+  extension (s: String)
+    def charParser(): Parser[Char] = new BasicParser(s.toSet)
 
-trait NonEmpty[T] extends Parser[T]:
-  private[this] var empty = true
-  abstract override def parse(t: T): Boolean =
-    empty = false;
-    super.parse(t) // who is super??
-  abstract override def end: Boolean = !empty && super.end
+  class BasicParser(chars: Set[Char]) extends Parser[Char]:
+    override def parse(t: Char): Boolean = chars.contains(t)
+    override def end: Boolean = true
 
-class NonEmptyParser(chars: Set[Char]) extends BasicParser(chars) with NonEmpty[Char]
+  trait NonEmpty[T] extends Parser[T]:
+    private[this] var empty = true
+    abstract override def parse(t: T): Boolean =
+      empty = false;
+      super.parse(t) // who is super??
+    abstract override def end: Boolean = !empty && super.end
 
-trait NotTwoConsecutive[T] extends Parser[T]:
-  val todo = ???
-// ???
+  class NonEmptyParser(chars: Set[Char]) extends BasicParser(chars) with NonEmpty[Char]
 
-class NotTwoConsecutiveParser(chars: Set[Char]) extends BasicParser(chars) // with ????
+  trait NotTwoConsecutive[T] extends Parser[T]:
+      private var last: Option[T] = None
+      abstract override def parse(t: T): Boolean =
+          val res = last.fold(true)(t != _)
+          last = Some(t)
+          res && super.parse(t)
+
+  class NotTwoConsecutiveParser(chars: Set[Char]) extends BasicParser(chars) with NotTwoConsecutive[Char]
 
 @main def checkParsers(): Unit =
+  import Parsers.*
+
   def parser = new BasicParser(Set('a', 'b', 'c'))
   println(parser.parseAll("aabc".toList)) // true
   println(parser.parseAll("aabcdc".toList)) // false
@@ -56,7 +63,7 @@ class NotTwoConsecutiveParser(chars: Set[Char]) extends BasicParser(chars) // wi
   println(parserNTCNE.parseAll("XYYZ".toList)) // false
   println(parserNTCNE.parseAll("".toList)) // false
 
-  def sparser: Parser[Char] = ??? // "abc".charParser()
+  def sparser: Parser[Char] = "abc".charParser()
   println(sparser.parseAll("aabc".toList)) // true
   println(sparser.parseAll("aabcdc".toList)) // false
   println(sparser.parseAll("".toList)) // true
