@@ -10,6 +10,7 @@ class ParserScalaTests extends org.scalatest.flatspec.AnyFlatSpec:
   def parserNTC = new NotTwoConsecutiveParser(Set('X', 'Y', 'Z'))
   def parserNTCNE = new BasicParser(Set('X', 'Y', 'Z')) with NotTwoConsecutive[Char] with NonEmpty[Char]
   def sparser: Parser[Char] = "abc".charParser()
+  def parserSTN = new ShortenThanNParser(Set('a', 'b', 'c'))(3)
 
   "BasicParser" should "parse correctly" in:
     parser.parseAll("aabc".toList) should be (true)
@@ -35,3 +36,8 @@ class ParserScalaTests extends org.scalatest.flatspec.AnyFlatSpec:
     sparser.parseAll("aabc".toList) should be (true)
     sparser.parseAll("aabcdc".toList) should be (false)
     sparser.parseAll("".toList) should be (true)
+
+  "ShortenThanNParser" should "parse correctly" in:
+    parserSTN.parseAll("abc".toList) should be (true)
+    parserSTN.parseAll("aabcdc".toList) should be (false)
+    parserSTN.parseAll("".toList) should be (true)
